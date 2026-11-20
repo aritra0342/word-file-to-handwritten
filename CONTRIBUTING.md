@@ -25,8 +25,9 @@ the script, update the table in `SKILL.md` and in `README.md`.
 
 ## Releasing
 
-Push a tag such as `v1.1.0`. The workflow packages the skill folder as
-`word-file-to-handwritten.skill` and attaches it to a GitHub release.
+Publish a release on GitHub with a tag such as `v1.1.0`. The workflow packages
+the skill folder as `word-file-to-handwritten.skill` and attaches it to that
+release.
 
 ## Fonts
 
