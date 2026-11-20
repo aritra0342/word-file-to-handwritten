@@ -1,0 +1,61 @@
+name: Test and package
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Fetch fonts if missing
+        run: python tools/fetch_fonts.py
+      - name: Check SKILL.md front matter
+        run: |
+          head -n 1 skills/word-file-to-handwritten/SKILL.md | grep -qx -- '---'
+          grep -q '^name: word-file-to-handwritten$' skills/word-file-to-handwritten/SKILL.md
+          grep -q '^description: ' skills/word-file-to-handwritten/SKILL.md
+      - name: Render the sample text
+        run: python skills/word-file-to-handwritten/scripts/handwrite.py examples/sample.md -o sample.pdf --paper ruled --ink blue
+      - name: Render a Word file
+        run: |
+          python - <<'PY'
+          import docx
+          d = docx.Document()
+          d.add_heading('Smoke test', 1)
+          d.add_paragraph('The quick brown fox jumps over the lazy dog 0123456789.')
+          d.add_paragraph('First point', style='List Bullet')
+          d.save('smoke.docx')
+          PY
+          python skills/word-file-to-handwritten/scripts/handwrite.py smoke.docx -o smoke.pdf
+          test -s smoke.pdf
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch fonts if missing
+        run: python3 tools/fetch_fonts.py
+      - name: Package the skill
+        run: |
+          cd skills
+          zip -r ../word-file-to-handwritten.skill word-file-to-handwritten -x '*__pycache__*'
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" word-file-to-handwritten.skill --title "$GITHUB_REF_NAME" --notes "See CHANGELOG.md for what changed."

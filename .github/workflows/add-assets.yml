@@ -1,0 +1,34 @@
+name: Add fonts and sample image
+
+# Downloads the bundled fonts and renders the README sample image, then commits
+# them to the repository. Runs once when this file is added, and on demand.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/add-assets.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  add:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Fetch fonts
+        run: python tools/fetch_fonts.py
+      - name: Render sample image
+        run: python tools/make_sample.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skills/word-file-to-handwritten/assets/fonts examples/sample.png
+          git diff --cached --quiet || git commit -m "Add bundled fonts and sample image"
+          git push
