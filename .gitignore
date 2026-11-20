@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+*_handwritten.pdf
+*.skill
+.DS_Store

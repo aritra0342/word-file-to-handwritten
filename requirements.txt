@@ -1,0 +1,7 @@
+pillow
+numpy
+scipy
+fonttools
+img2pdf
+python-docx
+pdfplumber
